@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+      /* Linting */
+      "strict": true,
+      "noUnusedLocals": false,
+      "noUnusedParameters": false,
+      "noFallthroughCasesInSwitch": true,
+      "noUncheckedSideEffectImports": true,
+      "esModuleInterop": true,
+      "lib": ["esnext"],
+      "types": [
+        "@types/node",
+        "node"
+      ],
+      "baseUrl": ".",
+      "paths": {
+        "@/*": [
+          "src/*"
+        ]
+      }
+    },
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.d.ts"
+    ]
+  }
