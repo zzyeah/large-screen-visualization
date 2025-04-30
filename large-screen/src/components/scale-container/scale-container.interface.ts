@@ -21,5 +21,5 @@ export interface ScaleContainerState {
   originalHeight: string | number; // 原始设计稿高度
   width?: string | number; // 当前计算宽度
   height?: string | number; // 当前计算高度
-  observer: null | MutationObserver; // DOM变化观察器
+  observer: ResizeObserver | null; // DOM变化观察器
 }

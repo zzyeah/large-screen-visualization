@@ -1,7 +1,7 @@
 # large-screen-visualization
 # 大屏数据可视化项目
 
-[HOC]
+[TOC]
 
 ## 尺寸
 

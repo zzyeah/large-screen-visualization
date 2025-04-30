@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onActivated, onMounted, onUnmounted, ref } from "vue";
+import { nextTick, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import type {
   ScaleContainerProps,
   ScaleContainerState,
@@ -32,7 +32,7 @@ const state = ref<ScaleContainerState>({
   height: 0, // 当前高度
   originalWidth: 0, // 原始宽度
   originalHeight: 0, // 原始高度
-  observer: null, // MutationObserver实例
+  observer: null, // ResizeObserver实例
 });
 
 const el = ref<HTMLElement>();
@@ -98,7 +98,9 @@ const autoScale = (scale: number) => {
     !props.autoScale.x && (maxX = 0);
     !props.autoScale.y && (maxY = 0);
   }
-  el.value!.style.transform = `scale(${scale}, ${scale}) translate(${maxX / scale}px, ${maxY / scale}px)`;
+  el.value!.style.transform = `scale(${scale}, ${scale}) translate(${
+    maxX / scale
+  }px, ${maxY / scale}px)`;
 };
 
 // 计算并更新缩放比例
@@ -128,6 +130,11 @@ const updateLayout = async () => {
   updateScale();
 };
 
+watch(
+  () => [props.width, props.height],
+  () => updateLayout()
+);
+
 // 防抖处理：重置函数
 const onResize = debounce(async () => {
   await updateLayout();
@@ -138,33 +145,52 @@ const onResize = debounce(async () => {
  * MutationObserver 可以捕获 DOM 自身属性变化（如手动修改style、动态内容导致尺寸发生变化等）
  * 可以确保当其他代码意外修改了.screen-wrapper的尺寸时，也能触发onResize,重新计算比例
  */
-const initMutationObserver = () => {
-  const mutationCallback: MutationCallback = (
-    mutations: MutationRecord[],
-    observer: MutationObserver
-  ) => {
-    // 可以作为性能优化的方案
-    for (const mutation of mutations) {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "style"
-        ) {
-          onResize();
-        }
-      console.log(`Scale Container: mutationCallback`);
-      // console.log(mutation);
-    }
-    // onResize();
-  };
+// const initMutationObserver = () => {
+//   const mutationCallback: MutationCallback = (
+//     mutations: MutationRecord[],
+//     observer: MutationObserver
+//   ) => {
+//     // 可以作为性能优化的方案
+//     for (const mutation of mutations) {
+//       if (
+//         mutation.type === "attributes" &&
+//         mutation.attributeName === "style"
+//       ) {
+//         onResize();
+//       }
+//       console.log(`Scale Container: mutationCallback`);
+//       // console.log(mutation);
+//     }
+//     // onResize();
+//   };
 
-  const observer = (state.value.observer = new MutationObserver(
-    mutationCallback
+//   const observer = (state.value.observer = new MutationObserver(
+//     mutationCallback
+//   ));
+//   observer.observe(el.value!, {
+//     attributes: true, // 监听属性变化
+//     attributeFilter: ["style"], // 仅监听style属性
+//     attributeOldValue: true, // 记录变化前的值
+//   });
+// };
+
+/**
+ * 初始化ResizeObserver监听器
+ * ResizeObserver 可以监听DOM尺寸变化，当尺寸发生变化时，触发onResize，重新计算比例
+ * 可以确保当其他代码意外修改了.screen-wrapper的尺寸时，也能触发onResize,重新计算比例
+ */
+const initResizeObserver = () => {
+  if (!el.value) return;
+  const resizeObserver = (state.value.observer = new ResizeObserver(
+    (entries: ResizeObserverEntry[], observer: ResizeObserver) => {
+      console.log("Scale Container: resizeObserver was triggered by accident");
+      for (const entry of entries) {
+        console.log(entry);
+      }
+      onResize();
+    }
   ));
-  observer.observe(el.value!, {
-    attributes: true, // 监听属性变化
-    attributeFilter: ["style"], // 仅监听style属性
-    attributeOldValue: true, // 记录变化前的值
-  });
+  resizeObserver.observe(el.value);
 };
 
 onMounted(() => {
@@ -172,7 +198,7 @@ onMounted(() => {
   nextTick(async () => {
     await updateLayout();
     window.addEventListener("resize", onResize);
-    initMutationObserver();
+    initResizeObserver();
   });
 });
 

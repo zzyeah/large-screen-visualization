@@ -1,5 +1,7 @@
 # ECharts
 
+[TOC]
+
 ## 引入
 ```shell
 pnpm add echarts
